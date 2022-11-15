@@ -6,7 +6,7 @@ WINDOW_WIDTH = 500
 SECTION_SIZE = 50
 SNAKE_COLOR = "green"
 APPLE_COLOR = "red"
-SNAKE_SPEED = 200
+SNAKE_SPEED = 1000
 SECTIONS = 3
 BG_COLOR = "black"
 
@@ -51,20 +51,53 @@ def play(snake, apple):
 
     snake.coordinates.insert(0, (x, y))
 
-    del snake.coordinates[-1]
-    canvas.delete(snake.sections[-1])
-    del snake.sections[-1]
+    if x == apple.coordinates[0] and y == apple.coordinates[1]:
+        global score
+        score += 1
+        label.config(text="Score:{}".format(score))
+        canvas.delete("apple")
+        apple = Apple()
+    else:
+        del snake.coordinates[-1]
+        canvas.delete(snake.sections[-1])
+        del snake.sections[-1]
 
-    root.after(SNAKE_SPEED, play, snake, apple)
+    if check_game_over(snake):
+        game_over()
+    else:
+        root.after(SNAKE_SPEED, play, snake, apple)
+    
+def turn(new_direction):
+    global direction
 
-def turn():
-    pass
+    if new_direction == "w":
+        if direction != "s":
+            direction = new_direction
+    if new_direction == "a":
+        if direction != "d":
+            direction = new_direction
+    if new_direction == "d":
+        if direction != "a":
+            direction = new_direction
+    if new_direction == "s":
+        if direction != "w":
+            direction = new_direction
 
-def check_game_over():
-    pass
+def check_game_over(snake):
+    x, y = snake.coordinates[0]
+    if x < 0 or x >= WINDOW_WIDTH:
+        return(True)
+    elif y < 0 or y >= WINDOW_HEIGHT:
+        return(True)
+
+    for coords in snake.coordinates[1:]:
+        if x == coords[0] and y == coords[1]:
+            return(True)
+
+    return(False)
 
 def game_over():
-    pass
+    canvas.delete(ALL)
 
 root = Tk()
 root.title("Snake")
@@ -73,10 +106,16 @@ root.resizable(False, False)
 score = 0
 direction = "s"
 
-label = Label(root, text = "Score: {}".format(score)).pack()
+label = Label(root, text = "Score: {}".format(score))
+label.pack()
 
 canvas = Canvas(root, bg = BG_COLOR, height = WINDOW_HEIGHT, width = WINDOW_HEIGHT)
 canvas.pack()
+
+root.bind('<Left>', lambda event: turn("a"))
+root.bind('<Right>', lambda event: turn("d"))
+root.bind('<Up>', lambda event: turn("w"))
+root.bind('<Down>', lambda event: turn("s"))
 
 snake = Snake()
 apple = Apple()
